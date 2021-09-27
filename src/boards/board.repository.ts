@@ -1,3 +1,4 @@
+import { NotFoundException } from "@nestjs/common";
 import { EntityRepository, Repository } from "typeorm";
 import { BoardStatus } from "./boards.model";
 import { CreateBoardDto } from "./dto/create-borad.dto";
@@ -6,6 +7,7 @@ import { Board } from "./entities/borad.entity";
 // 이 repository가 Board를 control하는 repository임을 선언해줌
 @EntityRepository(Board)
 export class BoardRepository extends Repository<Board> {
+
 
 
     async createBoard(createBoardDto: CreateBoardDto): Promise<Board> {
@@ -27,8 +29,18 @@ export class BoardRepository extends Repository<Board> {
         // remove를 이용하려면, item 유무를 확인하고, 그 다음에 지워주므로 db를 2번이나 접근하게 됨 -> delete를 쓰는게 좋다.
         const result = await this.delete(id);
         
+
+        // 확인해보면, result:  DeleteResult { raw: [], affected: 0 }
+        // 이렇게 찍힘.
+        // affected는 이 method를 통해 영향을 받은 것 -> 0이면 delete 된 것이 없다는 뜻이다.
         console.log("result: ",result);
+
+        if(result.affected === 0) {
+            throw new NotFoundException(`Can't find Board with id ${id}`);
+        }
     }
+
+    
     
 }
 
