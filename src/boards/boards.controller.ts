@@ -1,4 +1,7 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Logger, Param, ParseIntPipe, Patch, Post, Query, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { User } from 'src/auth/entities/user.entity';
+import { GetUser } from 'src/auth/get-user.decorator';
 import { CreateBoardDto } from 'src/boards/dto/create-borad.dto';
 import { BoardStatus } from './boards.model';
 import { BoardsService } from './boards.service';
@@ -7,8 +10,12 @@ import { BoardStatusValidationPipe } from './pipes/board-status-validation.pipe'
 
 
 @Controller("boards")
+// AuthModule을 import 하고, UseGuard 미들웨어를 controller 단위에서 적용시키면, "board/"로 접근하는 모두에게 영향을 줄 수 있다.
+@UseGuards(AuthGuard())
 export class BoardsController {
     constructor(private boardsService: BoardsService) {}
+    private logger = new Logger("Boards");
+    // log를 남겨서 확인할 수 있다.
 
     @Get("/")
     getAllBoards(): Promise<Board[]> {
@@ -20,15 +27,28 @@ export class BoardsController {
         return this.boardsService.getBoardById(id);
     }
 
+    @Get("/user-boards/:userid")
+    getUserBoards(
+        @Param("userid", ParseIntPipe) userid: number,
+        @GetUser() user : User): Promise<Board[]>{
+            this.logger.verbose(`User ${user.username} is trying to get all boards...`)
+        return this.boardsService.getUserBoards(userid, user);
+    }
+
     @Post()
     @UsePipes(ValidationPipe)
-    createBoard(@Body() createBoardDto: CreateBoardDto): Promise<Board> {
-        return this.boardsService.createBoard(createBoardDto);
+    createBoard(
+        @Body() createBoardDto: CreateBoardDto,
+        @GetUser() user: User): Promise<Board> {
+            this.logger.verbose(`User ${user.username} creating new board.\nPayload: ${JSON.stringify(createBoardDto)}`)
+        return this.boardsService.createBoard(createBoardDto, user);
     }
 
     @Delete("/:id")
-    deleteBoard(@Param("id", ParseIntPipe) id: number): void {
-        return this.boardsService.deleteBoard(id);
+    deleteBoard(
+        @Param("id", ParseIntPipe) id: number,
+        @GetUser() user: User): Promise<void> {
+        return this.boardsService.deleteBoard(id, user);
     }
 
     @Patch("/:id/status")

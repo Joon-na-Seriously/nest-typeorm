@@ -1,4 +1,5 @@
 import { NotFoundException } from "@nestjs/common";
+import { User } from "src/auth/entities/user.entity";
 import { EntityRepository, Repository } from "typeorm";
 import { BoardStatus } from "./boards.model";
 import { CreateBoardDto } from "./dto/create-borad.dto";
@@ -10,24 +11,26 @@ export class BoardRepository extends Repository<Board> {
 
 
 
-    async createBoard(createBoardDto: CreateBoardDto): Promise<Board> {
+    async createBoard(createBoardDto: CreateBoardDto, user : User): Promise<Board> {
         const {title, description} = createBoardDto;
 
         const board = this.create({
             title,
             description,
-            status: BoardStatus.PUBLIC
+            status: BoardStatus.PUBLIC,
+            user: user
         })
         await this.save(board);
 
         return board;
     }
 
-    async deleteBoard(id: number): Promise<void> {
+    async deleteBoard(id: number, user: User): Promise<void> {
         // remove() 메소드: 무조건 존재하는 item을 remove를 통해 지워야 함 -> 아니면 404 error를 반환한다. 
         // delete() 메소드: 만약 item이 존재하면 지우고, 존재하지 않으면 아무것도 안함 
         // remove를 이용하려면, item 유무를 확인하고, 그 다음에 지워주므로 db를 2번이나 접근하게 됨 -> delete를 쓰는게 좋다.
-        const result = await this.delete(id);
+        const result = await this.delete({id: id, user: user});
+        // delete 메소드에 user 패러미터를 같이 줌으로서 해당 유저만 글을 지울 수 있게 함.
         
 
         // 확인해보면, result:  DeleteResult { raw: [], affected: 0 }
