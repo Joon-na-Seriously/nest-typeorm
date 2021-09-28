@@ -1,8 +1,8 @@
 import { ConflictException, InternalServerErrorException } from "@nestjs/common";
-import e from "express";
 import { EntityRepository, Repository } from "typeorm";
 import { AuthCredentialDto } from "./dto/auth-credential.dto";
 import { User } from "./entities/user.entity";
+import * as bcrypt from "bcryptjs";
 
 @EntityRepository(User)
 export class UserRepository extends Repository<User> {
@@ -12,7 +12,12 @@ export class UserRepository extends Repository<User> {
     // auth entity에서 unique 속성을 던져주면 됨.
     async signUp(authCredentialDto: AuthCredentialDto): Promise<void> {
         const { username, password } = authCredentialDto;
-        const new_user = this.create({ username: username, password: password});
+
+        // salt - SHA256 해시 암호화를 위해 salt를 생성
+        const salt = await bcrypt.genSalt();
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        const new_user = this.create({ username: username, password: hashedPassword});
 
         try {
             await this.save(new_user);
@@ -23,7 +28,6 @@ export class UserRepository extends Repository<User> {
                 throw new InternalServerErrorException();
             }
         }
-        
     }
     
 }
