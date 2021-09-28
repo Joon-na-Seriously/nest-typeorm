@@ -1,0 +1,12 @@
+# default yml 에서 설정한 것 
+# + 개발 환경에서 필요한 정보들 
+
+db:
+  host: 'localhost'
+  username: 'postgres'
+  password: 'postgres'
+  # 매번 db를 켤 때마다 
+  synchronize: true
+
+jwt:
+  secret: 'Secret1234'

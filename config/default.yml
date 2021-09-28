@@ -1,0 +1,14 @@
+# 기본 설정
+# - 개발 환경 설정이나 운영 환경 설정 둘 다 똑같이 적용됨.
+
+server:
+  port: 3000
+
+db: 
+  type: 'postgres'
+  port: 5432
+  database: 'board-app'
+  
+jwt:
+  expiresIn: 3600
+  
